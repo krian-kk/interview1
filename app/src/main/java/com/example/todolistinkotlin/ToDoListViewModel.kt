@@ -14,9 +14,17 @@ import androidx.annotation.WorkerThread
 import androidx.databinding.ObservableField
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import com.example.todolistinkotlin.analytics.Analytics
+import com.example.todolistinkotlin.analytics.AnalyticsHelper
+import com.example.todolistinkotlin.analytics.EventTypes
+import com.example.todolistinkotlin.api.ApiHelperImpl
+import com.example.todolistinkotlin.api.RetrofitBuilder
 import com.example.todolistinkotlin.database.ToDoListDataEntity
 import com.example.todolistinkotlin.database.ToDoListDatabase
 import com.example.todolistinkotlin.notification.AlarmReceiver
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.lang.Exception
 import java.util.*
 
 /**
@@ -26,6 +34,7 @@ class ToDoListViewModel(val context: Application) : AndroidViewModel(context) {
     var toDoListData = MutableLiveData<ToDoListData>()
 
     var database: ToDoListDatabase? = null
+    var analyticsHelper: AnalyticsHelper? = null
 
     var getAllData = mutableListOf(ToDoListDataEntity())
     val toDoList = MutableLiveData<List<ToDoListDataEntity>>()
@@ -33,6 +42,7 @@ class ToDoListViewModel(val context: Application) : AndroidViewModel(context) {
 
     init {
         database = ToDoListDatabase.getInstance(context)
+        analyticsHelper = Analytics(apiHelper = ApiHelperImpl(RetrofitBuilder.apiService))
         database?.toDoListDao()?.getAll()?.let {
             getAllData = it as MutableList<ToDoListDataEntity>
         }
@@ -57,13 +67,17 @@ class ToDoListViewModel(val context: Application) : AndroidViewModel(context) {
     fun click(v: View) {
 
         Log.d("Click", "click")
-        if (title.get().toString().isNotBlank() && date.get().toString().isNotBlank() && time.get().toString().isNotBlank()) {
-            addData(title.get().toString(), date.get().toString(), time.get().toString(), id = index)
+        if (title.get().toString().isNotBlank() && date.get().toString().isNotBlank() && time.get()
+                .toString().isNotBlank()
+        ) {
+            addData(
+                title.get().toString(), date.get().toString(), time.get().toString(), id = index
+            )
             title.set("")
             date.set("")
             time.set("")
-        }else{
-            Toast.makeText(context,"Enter All Filed data",Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "Enter All Filed data", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -71,12 +85,15 @@ class ToDoListViewModel(val context: Application) : AndroidViewModel(context) {
     @WorkerThread
     private fun addData(title: String, date: String, time: String, id: Long) {
         //database?.toDoListDao()?.insert(ToDoListDataEntity(title = title, date = date, time = time))
+        val newTodo = ToDoListDataEntity(title = title, date = date, time = time, isShow = 0)
+
         if (position != -1) {
+            analyticsHelper?.storeEvent(EventTypes.EDIT.toString(), newTodo)
             database?.toDoListDao()?.update(title = title, date = date, time = time, id = id)
         } else {
-            val newId = database?.toDoListDao()?.insert(ToDoListDataEntity(title = title, date = date, time = time, isShow = 0))
+            val newId = database?.toDoListDao()?.insert(newTodo)
 
-            val cal : Calendar = Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault())
+            val cal: Calendar = Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault())
 
             cal.set(Calendar.MONTH, month)
             cal.set(Calendar.YEAR, year)
@@ -86,13 +103,13 @@ class ToDoListViewModel(val context: Application) : AndroidViewModel(context) {
             cal.set(Calendar.HOUR_OF_DAY, hour)
             cal.set(Calendar.MINUTE, minute)
 
-            Log.d("Alarm Title","$month , $date : ${cal.time}")
+            Log.d("Alarm Title", "$month , $date : ${cal.time}")
             newId?.let {
-                setAlarm(cal, 0, it, title,hour,minute)
+                setAlarm(cal, 0, it, title, hour, minute)
             }
 
         }
-
+        analyticsHelper?.storeEvent(EventTypes.ADD.toString(), newTodo)
         database?.toDoListDao()?.getAll().let {
             getAllData = it as MutableList<ToDoListDataEntity>
             getPreviousList()
@@ -113,20 +130,24 @@ class ToDoListViewModel(val context: Application) : AndroidViewModel(context) {
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
-    fun setAlarm(calender: Calendar, i: Int, id: Long, title: String, hour:Int,minute:Int) {
+    fun setAlarm(calender: Calendar, i: Int, id: Long, title: String, hour: Int, minute: Int) {
 
-        val alarmManager: AlarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val alarmManager: AlarmManager =
+            context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
         val intent = Intent(context, AlarmReceiver::class.java)
         intent.putExtra("INTENT_NOTIFY", true)
         intent.putExtra("isShow", i)
         intent.putExtra("id", id)
         intent.putExtra("title", title)
-        intent.putExtra("date","Time-> $hour:$minute")
-        val pandingIntent: PendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        intent.putExtra("date", "Time-> $hour:$minute")
+        val pandingIntent: PendingIntent =
+            PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
         if (i == 0) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,  calender.timeInMillis , pandingIntent)
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP, calender.timeInMillis, pandingIntent
+            )
         } else {
             alarmManager.cancel(pandingIntent)
         }

@@ -87,7 +87,7 @@ class MainActivity : AppCompatActivity(), OnItemClick {
 
         etdate.setOnClickListener {
 
-            val dpd = DatePickerDialog(this, DatePickerDialog.OnDateSetListener { view, year, monthOfYear, dayOfMonth ->
+            val dpd = DatePickerDialog(this, DatePickerDialog.OnDateSetListener { _, year, monthOfYear, dayOfMonth ->
 
                 // Display Selected date in textbox
                 etdate.setText("" + dayOfMonth + "/" + (monthOfYear + 1) + "/" + year)
