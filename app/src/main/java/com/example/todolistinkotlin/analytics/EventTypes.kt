@@ -4,5 +4,5 @@ enum class EventTypes {
     ADD,
     EDIT,
     DELETE,
-    READ
+    READ // optional
 }
