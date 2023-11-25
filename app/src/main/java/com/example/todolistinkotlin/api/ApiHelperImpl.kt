@@ -24,8 +24,8 @@ class ApiHelperImpl(private val apiService: ApiService) : ApiHelper {
         return try {
             val result = apiService.deleteEvent(eventName, id)
             when (result) {
-                is AnalyticsResult.Success<Boolean> -> println("Event captured successfully")
-                else -> AnalyticsResult.Error("Event capture failed")
+                is AnalyticsResult.Success<Boolean> -> println("Event deleted successfully")
+                else -> AnalyticsResult.Error("Event delete failed")
             }
             result
         } catch (exception: Exception) {
