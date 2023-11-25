@@ -127,6 +127,7 @@ class ToDoListViewModel(val context: Application) : AndroidViewModel(context) {
             getAllData = it as MutableList<ToDoListDataEntity>
             getPreviousList()
         }
+        analyticsHelper?.deleteEvent(EventTypes.DELETE.toString(), id.toString())
     }
 
     @RequiresApi(Build.VERSION_CODES.M)

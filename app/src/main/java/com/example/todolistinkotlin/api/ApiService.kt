@@ -1,22 +1,14 @@
 package com.example.todolistinkotlin.api
 
 import com.example.todolistinkotlin.database.ToDoListDataEntity
-import retrofit2.http.GET
+import retrofit2.http.POST
 
 interface ApiService {
-
-    @GET("add")
-    suspend fun addNote()
-
-    @GET("delete")
-    suspend fun deleteNote()
-
-    @GET("error")
-    suspend fun getError()
-
-    @GET("storeEvents")
+    @POST("storeEvents")
     suspend fun storeEventToServer(
-        eventName: String,
-        params: ToDoListDataEntity
+        eventName: String, params: ToDoListDataEntity
     ): AnalyticsResult<Boolean>
+
+    @POST("delete")
+    suspend fun deleteEvent(eventName: String, id: String): AnalyticsResult<Boolean>
 }

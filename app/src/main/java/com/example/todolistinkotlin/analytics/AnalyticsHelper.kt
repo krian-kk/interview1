@@ -6,4 +6,6 @@ import com.example.todolistinkotlin.database.ToDoListDataEntity
 interface AnalyticsHelper {
     fun storeEvent(eventName: String, newTodo: ToDoListDataEntity)
 
+    fun deleteEvent(eventName: String, todoId: String)
+
 }

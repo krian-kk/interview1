@@ -19,4 +19,18 @@ class ApiHelperImpl(private val apiService: ApiService) : ApiHelper {
             AnalyticsResult.Error("Unknown Error")
         }
     }
+
+    override suspend fun deleteEvent(eventName: String, id: String): AnalyticsResult<Boolean> {
+        return try {
+            val result = apiService.deleteEvent(eventName, id)
+            when (result) {
+                is AnalyticsResult.Success<Boolean> -> println("Event captured successfully")
+                else -> AnalyticsResult.Error("Event capture failed")
+            }
+            result
+        } catch (exception: Exception) {
+            println(exception)
+            AnalyticsResult.Error("Unknown Error")
+        }
+    }
 }

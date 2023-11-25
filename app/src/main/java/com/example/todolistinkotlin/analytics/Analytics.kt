@@ -12,5 +12,11 @@ class Analytics(val apiHelper: ApiHelper) : AnalyticsHelper {
             apiHelper.storeEvent(eventName, newTodo)
         }
     }
+
+    override fun deleteEvent(eventName: String, todoId: String) {
+        GlobalScope.launch {
+            apiHelper.deleteEvent(eventName, todoId)
+        }
+    }
 }
 
